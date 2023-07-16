@@ -1,16 +1,15 @@
 package com.wiring.api;
 
 import com.wiring.api.action.DatabaseCreate;
-import com.wiring.api.entity.Column;
-import com.wiring.api.entity.ColumnType;
+import com.wiring.api.action.Delete;
+import com.wiring.api.action.Insert;
+import com.wiring.api.action.Select;
 import com.wiring.api.entity.Database;
-import com.wiring.api.exception.DatabaseException;
+import com.wiring.api.exception.WiringException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.Map;
 
 public class WiringAPI {
@@ -48,19 +47,37 @@ public class WiringAPI {
         try {
             connection = dataSource.getConnection();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                throw new WiringException(e.getMessage());
+            } catch (WiringException ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
-        WiringAPI api = new WiringAPI(host, username, password);
+    }
 
-        api.createDatabase("test") // создание датабазы
-                .execute() // выполнение запроса
-                .createTable("table") // создание таблицы
-                .column(new Column("name", ColumnType.VARCHAR).primaryKey().notNull()) // добавление колонны
-                .column(new Column("age", ColumnType.INT).defaultValue(18)) // добавление колонны
-                .column(new Column("info", ColumnType.LONGTEXT)) // добавление колонны
-                .execute(); // выполнение запроса
+    public Insert insert(String name) {
+        return new Insert(getDatabase(name), this);
+    }
 
+    public Insert insert(Database database) {
+        return new Insert(database, this);
+    }
+
+    public Select select(String name) {
+        return new Select(getDatabase(name), this);
+    }
+
+    public Select select(Database database) {
+        return new Select(database, this);
+    }
+
+    public Delete delete(String name) {
+        return new Delete(getDatabase(name), this);
+    }
+
+    public Delete delete(Database database) {
+        return new Delete(database, this);
     }
 
     public ResultSet execute(String sql) {
@@ -68,7 +85,11 @@ public class WiringAPI {
             PreparedStatement ps = connection.prepareStatement(sql);
             return ps.executeQuery();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                throw new WiringException(e.getMessage());
+            } catch (WiringException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
@@ -93,8 +114,8 @@ public class WiringAPI {
             return new Database(name, connection);
         } else {
             try {
-                throw new DatabaseException("Такой базы возможно не существует");
-            } catch (DatabaseException e) {
+                throw new WiringException("Такой базы возможно не существует");
+            } catch (WiringException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -113,7 +134,11 @@ public class WiringAPI {
             try {
                 statement.close();
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                try {
+                    throw new WiringException(e.getMessage());
+                } catch (WiringException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
     }

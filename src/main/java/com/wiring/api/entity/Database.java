@@ -1,8 +1,7 @@
 package com.wiring.api.entity;
 
 import com.wiring.api.action.TableCreate;
-import com.wiring.api.exception.DatabaseException;
-import com.wiring.api.exception.TableException;
+import com.wiring.api.exception.WiringException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,9 +19,7 @@ public class Database extends WiringObject {
 
     public boolean existsTable(String name) {
         try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT `?` FROM `?`");
-            ps.setString(1, name);
-            ps.setString(2, getName());
+            PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM " + getName() + "." + name + ";");
             ps.executeQuery();
         } catch (Exception e) {
             return false;
@@ -36,8 +33,8 @@ public class Database extends WiringObject {
             return new Table(name, this, getConnection());
         } else {
             try {
-                throw new TableException("Такой таблицы возможно не существует");
-            } catch (TableException e) {
+                throw new WiringException("Такой таблицы возможно не существует");
+            } catch (WiringException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -48,11 +45,14 @@ public class Database extends WiringObject {
         super.drop();
 
         try {
-            PreparedStatement ps = getConnection().prepareStatement("DROP DATABASE `?`;");
-            ps.setString(1, getName());
+            PreparedStatement ps = getConnection().prepareStatement("DROP DATABASE " + getName() + ";");
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            try {
+                throw new WiringException(e.getMessage());
+            } catch (WiringException ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
     }

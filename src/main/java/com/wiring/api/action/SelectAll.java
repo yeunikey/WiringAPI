@@ -10,73 +10,53 @@ import com.wiring.api.exception.WiringException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Select {
+public class SelectAll {
 
     private WiringAPI api;
 
     private Database database;
     private Table table;
 
-    private String key;
-    private Object value;
-
-    public Select(Database database, WiringAPI api) {
+    public SelectAll(Database database, WiringAPI api) {
         this.api = api;
         this.database = database;
     }
 
-    public Select table(Table table) {
+    public SelectAll table(Table table) {
         this.table = table;
         return this;
     }
 
-    public Select table(String table) {
+    public SelectAll table(String table) {
         this.table = database.getTable(table);
         return this;
     }
 
-    public Select key(String key) {
-        this.key = key;
-        return this;
-    }
-
-    public Select value(Object value) {
-        this.value = value;
-        return this;
-    }
-
-    public WiringResult execute() {
+    public List<WiringResult> execute() {
         try {
-
-            if (key == null) {
-                Column column = null;
-                for (Column col : table.getColumns()) {
-                    if (col.isKey()) {
-                        key = col.getName();
-                    }
-                }
-            }
 
             Statement statement = api.getConnection().createStatement();
 
             statement.execute("USE " + database.getName() + ";");
-            statement.execute("SELECT * from `" + table.getName() + "` WHERE " + key + " = '" + value + "';");
+            statement.execute("SELECT * from `" + table.getName() + "`;");
 
-            WiringResult result = new WiringResult(table);
+            List<WiringResult> resultList = new ArrayList<WiringResult>();
             ResultSet resultSet = statement.getResultSet();
 
             while (resultSet.next()) {
+                WiringResult result = new WiringResult(table);
                 for (Column column : table.getColumns()) {
                     result.write(column, resultSet.getObject(column.getName()));
                 }
+                resultList.add(result);
             }
 
             statement.close();
 
-            return result;
+            return resultList;
         } catch (SQLException e) {
             try {
                 throw new WiringException(e.getMessage());

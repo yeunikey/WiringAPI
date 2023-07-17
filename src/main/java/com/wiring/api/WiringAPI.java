@@ -1,15 +1,14 @@
 package com.wiring.api;
 
-import com.wiring.api.action.DatabaseCreate;
-import com.wiring.api.action.Delete;
-import com.wiring.api.action.Insert;
-import com.wiring.api.action.Select;
+import com.wiring.api.action.*;
 import com.wiring.api.entity.Database;
+import com.wiring.api.entity.WiringResult;
 import com.wiring.api.exception.WiringException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.*;
+import java.util.List;
 import java.util.Map;
 
 public class WiringAPI {
@@ -70,6 +69,14 @@ public class WiringAPI {
 
     public Select select(Database database) {
         return new Select(database, this);
+    }
+
+    public SelectAll selectAll(String name) {
+        return new SelectAll(getDatabase(name), this);
+    }
+
+    public SelectAll selectAll(Database database) {
+        return new SelectAll(database, this);
     }
 
     public Delete delete(String name) {

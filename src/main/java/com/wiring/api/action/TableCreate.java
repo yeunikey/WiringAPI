@@ -33,38 +33,42 @@ public class TableCreate {
     public Table execute() {
         try {
 
-            String sql = "CREATE TABLE IF NOT EXISTS " + database.getName() + "." + name + " ";
+            String sql = "CREATE TABLE IF NOT EXISTS " + database.getName() + "." + name;
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            int count = 1;
-            for (Column column : columns) {
-                String type = column.getType().toString();
-                if (type.equalsIgnoreCase("VARCHAR")) {
-                    type = "VARCHAR(255)";
-                }
-                String formatted = column.getName() + " " + type;
-                if (column.isKey()) {
-                    formatted = formatted + " PRIMARY KEY";
-                }
-                if (!column.isNull()) {
-                    formatted = formatted + " NOT NULL";
-                }
-                if (column.getDefaultValue() != null) {
-                    formatted = formatted + " DEFAULT '" + column.getDefaultValue().toString() + "'";
-                }
-                if (count == columns.size()) {
-                    formatted = formatted;
-                } else {
-                    formatted = formatted + ", ";
-                }
+            if (!columns.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(" (");
+                int count = 1;
+                for (Column column : columns) {
+                    String type = column.getType().toString();
+                    if (type.equalsIgnoreCase("VARCHAR")) {
+                        type = "VARCHAR(255)";
+                    }
+                    String formatted = column.getName() + " " + type;
+                    if (column.isKey()) {
+                        formatted = formatted + " PRIMARY KEY";
+                    }
+                    if (!column.isNull()) {
+                        formatted = formatted + " NOT NULL";
+                    }
+                    if (column.getDefaultValue() != null) {
+                        formatted = formatted + " DEFAULT '" + column.getDefaultValue().toString() + "'";
+                    }
+                    if (count == columns.size()) {
+                        formatted = formatted;
+                    } else {
+                        formatted = formatted + ", ";
+                    }
 
-                sb.append(formatted);
-                count++;
+                    sb.append(formatted);
+                    count++;
+                }
+                sb.append(");");
+
+                sql = sql + sb.toString();
+            } else {
+                sql = sql + ";";
             }
-            sb.append(");");
-
-            sql = sql + sb.toString();
 
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.executeUpdate();
